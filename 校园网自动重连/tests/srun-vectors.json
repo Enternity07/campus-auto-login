@@ -1,0 +1,29 @@
+{
+  "source": "https://net.szu.edu.cn/static/themes/pro/js/Portal.js",
+  "source_sha256": "530bd0671a6d71f7eceac1c1c7d3e96d96c26d7735404481ebc505df7a1bf7e3",
+  "description": "Synthetic test inputs; expected encoding evaluated from the reviewed pure encoding helper of the actual SZU portal. No real credentials.",
+  "vectors": [
+    {
+      "account": "testStudent",
+      "password": "Example+&=?123",
+      "ip": "172.31.100.123",
+      "acid": "1",
+      "token": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+      "json": "{\"username\":\"testStudent\",\"password\":\"Example+&=?123\",\"ip\":\"172.31.100.123\",\"acid\":\"1\",\"enc_ver\":\"srun_bx1\"}",
+      "info": "{SRBX1}NCyDuJyZE1NZQ3X2hDYlvn4sPR5YAAsgdiD5T6X+p3QTvchx9srj3PPrO+j9iO1pqmrJTrI3BDvM8LkmQxLrfDVKgXvqRMq418dWGScYj0ilhXeqh/hpo6BtuCFBRFwQ5CZNoUsB85+VgyKnjR9Jo+==",
+      "digest": "685505ac573b49a15ca59c92a4ee9a45",
+      "checksum": "b7626cf794a0d52eaa8d8c40697ee61399e6c8cd"
+    },
+    {
+      "account": "testStudent",
+      "password": "中文🔒+&\"\\\n",
+      "ip": "172.31.100.123",
+      "acid": "1",
+      "token": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+      "json": "{\"username\":\"testStudent\",\"password\":\"中文🔒+&\\\"\\\\\\n\",\"ip\":\"172.31.100.123\",\"acid\":\"1\",\"enc_ver\":\"srun_bx1\"}",
+      "info": "{SRBX1}N33zrfOP5gQyxtzEdy+IFLaXoIV50S0Nl91TORIHWL0PjIC045fFXA1I6+Ml42AIH/POpYcRPcdBuiWJZfXvJxtj1exGMVPlwQXJIpyNUjvH4qSyRgH4uRj/RiInCDlTHrm6X3Yjf2ROZq3qVNvYiv==",
+      "digest": "9a1c9be20544f40be1c506b9b82cd94c",
+      "checksum": "1c7c08e6a422739d9627e3407aa3d92478426724"
+    }
+  ]
+}

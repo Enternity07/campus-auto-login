@@ -7,6 +7,14 @@ param(
 
 Set-StrictMode -Version 2.0
 $ErrorActionPreference = 'Stop'
+$script:DisplayName = '深圳大学宿舍区校园网助手'
+$script:EntryScriptPath = $PSCommandPath
+$script:InstanceSuffix = ''
+$script:NetworkDescription = '适用：深大宿舍区 172.30.255.42 / ePortal。'
+$script:AccountInstructions = '请输入深圳大学宿舍区认证网页使用的本人账号密码；密码不会显示。'
+$script:AccountPrompt = '深大校园卡号 / 上网账号（与宿舍区认证页一致，空行取消）'
+$script:PasswordPrompt = '深大宿舍区上网密码（以认证网页为准）'
+# 深圳大学宿舍区 Dr.COM / ePortal。教学办公区 net.szu.edu.cn 使用另一套认证。
 $script:PortalHost = '172.30.255.42'
 $script:AcIp = '172.30.255.41'
 $script:BaseUrl = 'http://' + $script:PortalHost
@@ -284,7 +292,7 @@ function Get-InstanceId {
     $hash = [Security.Cryptography.SHA256]::Create()
     try {
         $bytes = $hash.ComputeHash([Text.Encoding]::UTF8.GetBytes($PSScriptRoot.ToLowerInvariant() + $identity))
-        return 'CampusAutoLogin-' + ([BitConverter]::ToString($bytes).Replace('-','').Substring(0,20))
+        return 'CampusAutoLogin-' + ([BitConverter]::ToString($bytes).Replace('-','').Substring(0,20)) + $script:InstanceSuffix
     } finally { $hash.Dispose() }
 }
 
@@ -323,10 +331,10 @@ function Stop-Worker([switch]$Wait) {
 }
 
 function Set-Account {
-    Write-Host "`n请输入和认证网页相同的本人账号密码；密码不会显示，也不会发送到聊天。"
-    $account = (Read-Host '校园网账号（输入空行取消）').Trim()
+    Write-Host ("`n" + $script:AccountInstructions)
+    $account = (Read-Host $script:AccountPrompt).Trim()
     if (-not $account) { return }
-    $password = Read-Host '校园网密码' -AsSecureString
+    $password = Read-Host $script:PasswordPrompt -AsSecureString
     if ($password.Length -eq 0) { Write-Host '密码为空，已取消。'; return }
     Initialize-DataDirectory
     Stop-Worker -Wait
@@ -342,6 +350,10 @@ function Get-PowerShellPath {
     return Join-Path ([Environment]::GetFolderPath('System')) 'WindowsPowerShell\v1.0\powershell.exe'
 }
 
+function Get-WorkerArguments {
+    return '-NoLogo -NoProfile -ExecutionPolicy Bypass -File "' + $script:EntryScriptPath + '" -Action Worker'
+}
+
 function Start-Worker {
     if (-not (Test-Path -LiteralPath $script:CredentialPath)) { Set-Account }
     if (-not (Test-Path -LiteralPath $script:CredentialPath)) { return }
@@ -350,7 +362,7 @@ function Start-Worker {
         return
     }
     $null = Read-SavedCredential
-    $arguments = '-NoLogo -NoProfile -ExecutionPolicy Bypass -File "' + $PSCommandPath + '" -Action Worker'
+    $arguments = Get-WorkerArguments
     $null = Start-Process -FilePath (Get-PowerShellPath) -ArgumentList $arguments -WindowStyle Hidden
     Write-Host '已启动后台检测，可以关闭这个菜单窗口。每 30 秒检查一次；菜单 3 可停止。'
 }
@@ -360,7 +372,7 @@ function Set-Autostart([bool]$Enable) {
     $name = Get-InstanceId
     if ($Enable) {
         $null = Read-SavedCredential
-        $command = '"' + (Get-PowerShellPath) + '" -NoLogo -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "' + $PSCommandPath + '" -Action Worker'
+        $command = '"' + (Get-PowerShellPath) + '" -WindowStyle Hidden ' + (Get-WorkerArguments)
         $null = New-ItemProperty -Path $key -Name $name -Value $command -PropertyType String -Force
         Write-Host '已启用：当前 Windows 用户登录后自动运行。请保持程序文件夹路径不变。'
     } else {
@@ -433,15 +445,18 @@ function Invoke-Worker {
 
 function Invoke-Diagnose {
     $status = Get-PortalStatus
-    if ([string]$status.result -eq '1') { Write-Host '服务器可达，当前校园网认证已登录。'; return }
+    if ([string]$status.result -eq '1') { Write-Host '深圳大学宿舍区认证服务器可达，当前已登录。'; return }
     $context = Get-LoginContext $status
     Write-Host ('服务器可达，当前未登录；已识别当前 IP：' + $context.Ip + '，账号密码认证接口正常。')
     Write-Host '此检测没有提交账号密码。'
 }
 
 function Show-Menu {
+    try { $Host.UI.RawUI.WindowTitle = $script:DisplayName } catch { }
     while ($true) {
-        Write-Host "`n========== 校园网自动重连 =========="
+        Write-Host ("`n========== " + $script:DisplayName + ' ==========')
+        Write-Host $script:NetworkDescription
+        Write-Host '首次设置：2 保存账号 → 5 开机自启 → 1 立即运行。'
         if (Test-Path -LiteralPath $script:StatusPath) {
             try {
                 $last = Get-Content -LiteralPath $script:StatusPath -Raw -Encoding UTF8 | ConvertFrom-Json
@@ -455,7 +470,7 @@ function Show-Menu {
         Write-Host '5. 开启登录 Windows 后自动运行'
         Write-Host '6. 取消自动运行'
         Write-Host '7. 检测当前认证状态（不提交账号密码）'
-        Write-Host '8. 打开校园网认证网页'
+        Write-Host '8. 打开当前网络的认证网页'
         Write-Host '0. 关闭菜单'
         $choice = Read-Host '请输入数字'
         try {
