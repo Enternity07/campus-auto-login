@@ -1,0 +1,8 @@
+# Local credentials, runtime state and test scratch files
+**/.data/
+**/.test-data/
+**/credential.xml
+
+# Generated archives and portal inspection files
+*.zip
+portal-*
